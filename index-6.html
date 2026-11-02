@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fachrizal Store</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@600;700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+  /* Layout: kepala toko, grid produk, panel pesanan, bilah keranjang melayang di bawah */
+  :root {
+    --bg: #f3f6f6;
+    --surface: #ffffff;
+    --fg: #14232b;
+    --muted: #5a6b73;
+    --line: #d9e2e4;
+    --accent: #0f6b5c;
+    --accent-fg: #ffffff;
+    --tag: #f2b33d;
+    --tag-fg: #3a2a00;
+    --font-display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+    --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1a1f; --surface: #162830; --fg: #e8f0f2; --muted: #92a6ad;
+      --line: #264049; --accent: #3fc1a8; --accent-fg: #06231d;
+      --tag: #f2b33d; --tag-fg: #2b1f00; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1a1f; --surface: #162830; --fg: #e8f0f2; --muted: #92a6ad;
+    --line: #264049; --accent: #3fc1a8; --accent-fg: #06231d;
+    --tag: #f2b33d; --tag-fg: #2b1f00; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font-family: var(--font-body); font-size: 16px; line-height: 1.5;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 20px 120px;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; }
+  header { display: flex; flex-direction: column; gap: 6px; padding-block: 8px 20px; }
+  .eyebrow { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  h1 { font-family: var(--font-display); font-size: clamp(2.2rem, 9vw, 3.6rem); line-height: 1.02; margin: 0; letter-spacing: -.01em; text-wrap: balance; }
+  .lead { margin: 0; color: var(--muted); max-width: 52ch; }
+  h2 { font-family: var(--font-display); font-size: 1.35rem; margin: 0 0 12px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+  .thumb { position: relative; overflow: hidden; aspect-ratio: 1 / 1; display: grid; place-items: center; font-family: var(--font-display); font-size: 2.4rem; font-weight: 700; color: var(--accent-fg); }
+  .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  .info { padding: 12px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .name { font-weight: 600; overflow-wrap: anywhere; }
+  .desc { font-size: 13px; color: var(--muted); }
+  .price { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; margin-top: auto; padding-top: 6px; }
+  .qty { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
+  button { font: inherit; cursor: pointer; }
+  button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid var(--tag); outline-offset: 2px; }
+  .add { width: 100%; background: var(--accent); color: var(--accent-fg); border: 0; border-radius: 8px; padding: 10px; font-weight: 600; }
+  .step { display: flex; align-items: center; gap: 4px; width: 100%; justify-content: space-between; }
+  .step button { width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font-size: 1.2rem; font-weight: 600; }
+  .step output { font-weight: 600; min-width: 2ch; text-align: center; font-variant-numeric: tabular-nums; }
+  .order { margin-top: 28px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .lines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .lines li { display: flex; justify-content: space-between; gap: 12px; font-variant-numeric: tabular-nums; }
+  .lines li span:first-child { min-width: 0; overflow-wrap: anywhere; }
+  .empty { color: var(--muted); margin: 0; }
+  label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; font-weight: 500; }
+  input, textarea { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; width: 100%; }
+  .total { display: flex; justify-content: space-between; font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; border-top: 1px solid var(--line); padding-top: 12px; font-variant-numeric: tabular-nums; }
+  .wa { display: block; text-align: center; text-decoration: none; background: var(--accent); color: var(--accent-fg); border-radius: 10px; padding: 14px; font-weight: 600; }
+  .wa[aria-disabled="true"] { opacity: .45; pointer-events: none; }
+  .note { font-size: 13px; color: var(--muted); margin: 0; }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--line);
+    padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .bar .sum { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+  .bar .sum small { color: var(--muted); }
+  .bar .sum strong { font-family: var(--font-display); font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+  .bar a { text-decoration: none; background: var(--accent); color: var(--accent-fg); border-radius: 10px; padding: 12px 18px; font-weight: 600; white-space: nowrap; }
+  .bar a[aria-disabled="true"] { opacity: .45; pointer-events: none; }
+  .sample { display: inline-block; background: var(--tag); color: var(--tag-fg); border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 600; width: fit-content; }
+  @media (prefers-reduced-motion: no-preference) { .add, .wa, .bar a { transition: filter .15s; } .add:hover, .wa:hover, .bar a:hover { filter: brightness(1.08); } }
+
+  .sizes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .size { min-width: 44px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .size[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+  .unit { font-size: 13px; font-weight: 500; color: var(--muted); }
+  .hint { font-size: 13px; color: var(--muted); margin: 6px 0 0; min-height: 1.3em; }
+  .hint.warn { color: #b3541a; font-weight: 600; }
+  :root[data-theme="dark"] .hint.warn { color: #f2b33d; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hint.warn { color: #f2b33d; } }
+  .add[aria-disabled="true"] { opacity: .5; }
+  .lines li { align-items: center; }
+  .lines .ctl { display: inline-flex; align-items: center; gap: 4px; }
+  .lines .ctl button { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font-weight: 600; }
+  .lines .ctl output { min-width: 2ch; text-align: center; font-weight: 600; }
+  .lines .l-name { min-width: 0; overflow-wrap: anywhere; flex: 1; }
+  .lines .l-price { white-space: nowrap; }
+
+  .sizes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .size { min-width: 44px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .size[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+  .hint { font-size: 13px; color: var(--muted); margin: 6px 0 0; min-height: 1.3em; }
+  .hint.warn { color: #b3541a; font-weight: 600; }
+  :root[data-theme="dark"] .hint.warn { color: #f2b33d; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hint.warn { color: #f2b33d; } }
+  .add[aria-disabled="true"] { opacity: .5; }
+  .lines li { align-items: center; }
+  .lines .ctl { display: inline-flex; align-items: center; gap: 4px; }
+  .lines .ctl button { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font-weight: 600; }
+  .lines .ctl output { min-width: 2ch; text-align: center; font-weight: 600; }
+  .lines .l-name { min-width: 0; overflow-wrap: anywhere; flex: 1; }
+  .lines .l-price { white-space: nowrap; }
+  .pay { border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin: 0; min-width: 0; }
+  .pay legend { font-size: 14px; font-weight: 600; padding: 0 6px; }
+  .pay label.opt { flex-direction: row; align-items: center; gap: 10px; padding: 10px 8px; border-radius: 8px; font-weight: 500; font-size: 15px; cursor: pointer; }
+  .pay label.opt:has(input:checked) { background: var(--bg); outline: 1px solid var(--accent); }
+  .pay input[type="radio"] { width: 20px; height: 20px; padding: 0; accent-color: var(--accent); flex: none; }
+
+  .back { display: inline-block; color: var(--accent); font-weight: 600; text-decoration: none; padding: 6px 0; }
+  .back:hover { text-decoration: underline; }
+  .who { font-size: 14px; color: var(--muted); margin: 0; overflow-wrap: anywhere; }
+  .stack { display: flex; flex-direction: column; gap: 16px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Toko online</span>
+    <h1 id="namaToko">Fachrizal Store</h1>
+    <p class="lead">Pilih produk, lalu lanjut ke halaman pembayaran. Pembayaran bisa lewat QRIS atau lewat WhatsApp.</p>
+  </header>
+
+  <section aria-labelledby="h-produk">
+    <h2 id="h-produk">Produk</h2>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section class="order" aria-labelledby="h-pesan">
+    <h2 id="h-pesan" style="margin:0">Pesanan kamu</h2>
+    <ul class="lines" id="lines"></ul>
+    <p class="empty" id="empty">Keranjang masih kosong. Tambahkan produk di atas.</p>
+    <label for="nama">Nama
+      <input id="nama" type="text" autocomplete="name" placeholder="Nama pemesan">
+    </label>
+    <label for="catatan">Alamat atau catatan
+      <textarea id="catatan" rows="3" placeholder="Alamat pengiriman dan catatan lain"></textarea>
+    </label>
+    <div class="total"><span>Total</span><span id="total">Rp0</span></div>
+    <a class="wa" id="next" href="#" aria-disabled="true">Lanjut ke pembayaran</a>
+    <p class="note">Metode pembayaran dipilih di halaman berikutnya.</p>
+  </section>
+</div>
+
+<div class="bar">
+  <div class="sum"><small id="count">0 barang</small><strong id="barTotal">Rp0</strong></div>
+  <a id="barNext" href="#" aria-disabled="true">Lanjut</a>
+</div>
+
+<script src="pengaturan.js"></script>
+<script src="foto.js"></script>
+<script>
+  var cart = {};   // kunci: id|ukuran (atau id|- kalau tanpa ukuran)
+  var sel = {};
+  var warn = {};
+  var rp = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
+  var fmt = function (n) { return rp.format(n).replace(/\s/g, ""); };
+  var $ = function (id) { return document.getElementById(id); };
+  var byId = {}; PRODUCTS.forEach(function (p) { byId[p.id] = p; });
+  document.title = STORE; $("namaToko").textContent = STORE;
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  function renderGrid() {
+    $("grid").innerHTML = PRODUCTS.map(function (p) {
+      var chips = "", hint = "";
+      var chosen = p.sizes ? sel[p.id] : true;
+      if (p.sizes) {
+        chips = '<div class="sizes" role="group" aria-label="Ukuran ' + esc(p.name) + '">' + p.sizes.map(function (s) {
+          return '<button type="button" class="size" data-size="' + s + '" data-pid="' + p.id + '" aria-pressed="' + (sel[p.id] === s) + '">' + s + '</button>';
+        }).join("") + '</div>';
+        hint = warn[p.id] ? '<p class="hint warn">Pilih ukuran dulu.</p>' : '<p class="hint">' + (sel[p.id] ? "Ukuran " + sel[p.id] + " dipilih" : "Pilih ukuran") + '</p>';
+      }
+      var src = FOTO[p.image] || p.image;
+      var img = src ? '<img src="' + esc(src) + '" alt="' + esc(p.name) + '" loading="lazy" onerror="this.remove()">' : "";
+      return '<article class="card"><div class="thumb" style="background:' + p.color + '">' + esc(p.name.charAt(0)) + img + '</div>' +
+        '<div class="info"><div class="name">' + esc(p.name) + '</div><div class="desc">' + esc(p.desc) + '</div><div class="price">' + fmt(p.price) + (p.unit ? ' <small class="unit">/' + esc(p.unit) + '</small>' : '') + '</div>' +
+        chips + hint +
+        '<div class="qty"><button class="add" data-add="' + p.id + '" type="button" aria-disabled="' + (chosen ? "false" : "true") + '">Tambah ke keranjang</button></div></div></article>';
+    }).join("");
+  }
+
+  function entries() {
+    var out = [];
+    Object.keys(cart).forEach(function (k) {
+      if (cart[k] > 0) { var a = k.split("|"); out.push({ key: k, p: byId[a[0]], size: a[1] === "-" ? "" : a[1], q: cart[k] }); }
+    });
+    return out;
+  }
+
+  function payload() {
+    var l = [];
+    entries().forEach(function (e) { l.push([e.key, e.q]); });
+    return { n: $("nama").value.trim(), c: $("catatan").value.trim(), l: l };
+  }
+
+  function renderOrder() {
+    var items = 0, total = 0, rows = "";
+    entries().forEach(function (e) {
+      items += e.q; total += e.p.price * e.q;
+      rows += '<li><span class="l-name">' + esc(e.p.name) + (e.size ? ' · ukuran ' + esc(e.size) : '') + '</span>' +
+        '<span class="ctl"><button type="button" data-ldec="' + esc(e.key) + '" aria-label="Kurangi">−</button><output>' + e.q + '</output><button type="button" data-linc="' + esc(e.key) + '" aria-label="Tambah">+</button></span>' +
+        '<span class="l-price">' + fmt(e.p.price * e.q) + '</span></li>';
+    });
+    $("lines").innerHTML = rows;
+    $("empty").hidden = items > 0;
+    $("total").textContent = fmt(total);
+    $("barTotal").textContent = fmt(total);
+    $("count").textContent = items + " barang";
+    var url = items ? "pembayaran.html?o=" + encodeURIComponent(JSON.stringify(payload())) : "#";
+    ["next", "barNext"].forEach(function (id) {
+      var a = $(id);
+      a.href = url;
+      a.setAttribute("aria-disabled", items ? "false" : "true");
+    });
+  }
+
+  function update() { renderGrid(); renderOrder(); }
+
+  $("grid").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.size) { sel[b.dataset.pid] = Number(b.dataset.size); warn[b.dataset.pid] = false; update(); return; }
+    if (b.dataset.add) {
+      var id = b.dataset.add;
+      if (byId[id].sizes && !sel[id]) { warn[id] = true; update(); return; }
+      var k = id + "|" + (byId[id].sizes ? sel[id] : "-");
+      cart[k] = (cart[k] || 0) + 1;
+      update();
+    }
+  });
+  $("lines").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    var k = b.dataset.linc || b.dataset.ldec; if (!k) return;
+    cart[k] = Math.max(0, (cart[k] || 0) + (b.dataset.linc ? 1 : -1));
+    update();
+  });
+  $("nama").addEventListener("input", renderOrder);
+  $("catatan").addEventListener("input", renderOrder);
+  ["next", "barNext"].forEach(function (id) {
+    $(id).addEventListener("click", function (e) { if (this.getAttribute("aria-disabled") === "true") e.preventDefault(); });
+  });
+
+  // Pulihkan pesanan kalau pembeli kembali dari halaman pembayaran
+  try {
+    var o = new URLSearchParams(location.search).get("o");
+    if (o) {
+      var d = JSON.parse(o);
+      (d.l || []).forEach(function (x) {
+        var q = Math.floor(Number(x[1]));
+        if (byId[String(x[0]).split("|")[0]] && q > 0) cart[x[0]] = q;
+      });
+      $("nama").value = d.n || ""; $("catatan").value = d.c || "";
+    }
+  } catch (err) {}
+  update();
+</script>
+</body>
+</html>

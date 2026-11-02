@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fachrizal Store - Pembayaran</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@600;700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+  /* Layout: kepala toko, grid produk, panel pesanan, bilah keranjang melayang di bawah */
+  :root {
+    --bg: #f3f6f6;
+    --surface: #ffffff;
+    --fg: #14232b;
+    --muted: #5a6b73;
+    --line: #d9e2e4;
+    --accent: #0f6b5c;
+    --accent-fg: #ffffff;
+    --tag: #f2b33d;
+    --tag-fg: #3a2a00;
+    --font-display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+    --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1a1f; --surface: #162830; --fg: #e8f0f2; --muted: #92a6ad;
+      --line: #264049; --accent: #3fc1a8; --accent-fg: #06231d;
+      --tag: #f2b33d; --tag-fg: #2b1f00; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1a1f; --surface: #162830; --fg: #e8f0f2; --muted: #92a6ad;
+    --line: #264049; --accent: #3fc1a8; --accent-fg: #06231d;
+    --tag: #f2b33d; --tag-fg: #2b1f00; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font-family: var(--font-body); font-size: 16px; line-height: 1.5;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 20px 120px;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; }
+  header { display: flex; flex-direction: column; gap: 6px; padding-block: 8px 20px; }
+  .eyebrow { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  h1 { font-family: var(--font-display); font-size: clamp(2.2rem, 9vw, 3.6rem); line-height: 1.02; margin: 0; letter-spacing: -.01em; text-wrap: balance; }
+  .lead { margin: 0; color: var(--muted); max-width: 52ch; }
+  h2 { font-family: var(--font-display); font-size: 1.35rem; margin: 0 0 12px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+  .thumb { position: relative; overflow: hidden; aspect-ratio: 1 / 1; display: grid; place-items: center; font-family: var(--font-display); font-size: 2.4rem; font-weight: 700; color: var(--accent-fg); }
+  .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  .info { padding: 12px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .name { font-weight: 600; overflow-wrap: anywhere; }
+  .desc { font-size: 13px; color: var(--muted); }
+  .price { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; margin-top: auto; padding-top: 6px; }
+  .qty { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
+  button { font: inherit; cursor: pointer; }
+  button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid var(--tag); outline-offset: 2px; }
+  .add { width: 100%; background: var(--accent); color: var(--accent-fg); border: 0; border-radius: 8px; padding: 10px; font-weight: 600; }
+  .step { display: flex; align-items: center; gap: 4px; width: 100%; justify-content: space-between; }
+  .step button { width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font-size: 1.2rem; font-weight: 600; }
+  .step output { font-weight: 600; min-width: 2ch; text-align: center; font-variant-numeric: tabular-nums; }
+  .order { margin-top: 28px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .lines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .lines li { display: flex; justify-content: space-between; gap: 12px; font-variant-numeric: tabular-nums; }
+  .lines li span:first-child { min-width: 0; overflow-wrap: anywhere; }
+  .empty { color: var(--muted); margin: 0; }
+  label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; font-weight: 500; }
+  input, textarea { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; width: 100%; }
+  .total { display: flex; justify-content: space-between; font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; border-top: 1px solid var(--line); padding-top: 12px; font-variant-numeric: tabular-nums; }
+  .wa { display: block; text-align: center; text-decoration: none; background: var(--accent); color: var(--accent-fg); border-radius: 10px; padding: 14px; font-weight: 600; }
+  .wa[aria-disabled="true"] { opacity: .45; pointer-events: none; }
+  .note { font-size: 13px; color: var(--muted); margin: 0; }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--line);
+    padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .bar .sum { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+  .bar .sum small { color: var(--muted); }
+  .bar .sum strong { font-family: var(--font-display); font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+  .bar a { text-decoration: none; background: var(--accent); color: var(--accent-fg); border-radius: 10px; padding: 12px 18px; font-weight: 600; white-space: nowrap; }
+  .bar a[aria-disabled="true"] { opacity: .45; pointer-events: none; }
+  .sample { display: inline-block; background: var(--tag); color: var(--tag-fg); border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 600; width: fit-content; }
+  @media (prefers-reduced-motion: no-preference) { .add, .wa, .bar a { transition: filter .15s; } .add:hover, .wa:hover, .bar a:hover { filter: brightness(1.08); } }
+
+  .sizes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .size { min-width: 44px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .size[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+  .unit { font-size: 13px; font-weight: 500; color: var(--muted); }
+  .hint { font-size: 13px; color: var(--muted); margin: 6px 0 0; min-height: 1.3em; }
+  .hint.warn { color: #b3541a; font-weight: 600; }
+  :root[data-theme="dark"] .hint.warn { color: #f2b33d; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hint.warn { color: #f2b33d; } }
+  .add[aria-disabled="true"] { opacity: .5; }
+  .lines li { align-items: center; }
+  .lines .ctl { display: inline-flex; align-items: center; gap: 4px; }
+  .lines .ctl button { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font-weight: 600; }
+  .lines .ctl output { min-width: 2ch; text-align: center; font-weight: 600; }
+  .lines .l-name { min-width: 0; overflow-wrap: anywhere; flex: 1; }
+  .lines .l-price { white-space: nowrap; }
+
+  .sizes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .size { min-width: 44px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .size[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+  .hint { font-size: 13px; color: var(--muted); margin: 6px 0 0; min-height: 1.3em; }
+  .hint.warn { color: #b3541a; font-weight: 600; }
+  :root[data-theme="dark"] .hint.warn { color: #f2b33d; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hint.warn { color: #f2b33d; } }
+  .add[aria-disabled="true"] { opacity: .5; }
+  .lines li { align-items: center; }
+  .lines .ctl { display: inline-flex; align-items: center; gap: 4px; }
+  .lines .ctl button { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font-weight: 600; }
+  .lines .ctl output { min-width: 2ch; text-align: center; font-weight: 600; }
+  .lines .l-name { min-width: 0; overflow-wrap: anywhere; flex: 1; }
+  .lines .l-price { white-space: nowrap; }
+  .pay { border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin: 0; min-width: 0; }
+  .pay legend { font-size: 14px; font-weight: 600; padding: 0 6px; }
+  .pay label.opt { flex-direction: row; align-items: center; gap: 10px; padding: 10px 8px; border-radius: 8px; font-weight: 500; font-size: 15px; cursor: pointer; }
+  .pay label.opt:has(input:checked) { background: var(--bg); outline: 1px solid var(--accent); }
+  .pay input[type="radio"] { width: 20px; height: 20px; padding: 0; accent-color: var(--accent); flex: none; }
+
+  .back { display: inline-block; color: var(--accent); font-weight: 600; text-decoration: none; padding: 6px 0; }
+  .back:hover { text-decoration: underline; }
+  .who { font-size: 14px; color: var(--muted); margin: 0; overflow-wrap: anywhere; }
+  .stack { display: flex; flex-direction: column; gap: 16px; }
+  .qris { display: grid; place-items: center; background: #fff; border-radius: 10px; padding: 12px; }
+  .qris img { display: block; width: min(100%, 320px); height: auto; }
+  .how { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
+  .chk { flex-direction: row; align-items: center; gap: 10px; font-size: 15px; cursor: pointer; }
+  .chk input { width: 22px; height: 22px; padding: 0; accent-color: var(--accent); flex: none; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap stack">
+  <header>
+    <span class="eyebrow">Langkah terakhir</span>
+    <h1 id="namaToko">Fachrizal Store</h1>
+    <a class="back" id="back" href="index.html">← Ubah pesanan</a>
+  </header>
+
+  <section class="order" aria-labelledby="h-ringkas">
+    <h2 id="h-ringkas" style="margin:0">Ringkasan pesanan</h2>
+    <ul class="lines" id="lines"></ul>
+    <p class="empty" id="empty" hidden>Belum ada pesanan. Kembali ke halaman toko untuk memilih produk.</p>
+    <p class="who" id="who"></p>
+    <div class="total"><span>Total bayar</span><span id="total">Rp0</span></div>
+  </section>
+
+  <fieldset class="pay" id="pay">
+    <legend>Pilih metode pembayaran</legend>
+    <div id="payList"></div>
+  </fieldset>
+
+  <section class="order" id="qrisBox" aria-labelledby="h-qris" hidden>
+    <h2 id="h-qris" style="margin:0">Bayar dengan QRIS</h2>
+    <div class="qris"><img id="qrisImg" alt="Kode QRIS toko"></div>
+    <p class="hint warn" id="qrisMiss" hidden>Gambar QRIS belum dipasang. Pilih metode WhatsApp atau hubungi penjual.</p>
+    <ol class="how">
+      <li>Buka aplikasi bank atau e-wallet (GoPay, DANA, OVO, dan lainnya).</li>
+      <li>Scan kode QRIS di atas.</li>
+      <li>Masukkan nominal sesuai total: <strong id="amt">Rp0</strong>, lalu bayar.</li>
+      <li>Simpan bukti pembayaran, lalu kirim ke penjual lewat tombol di bawah.</li>
+    </ol>
+  </section>
+
+  <section class="order" id="waBox" aria-labelledby="h-wa" hidden>
+    <h2 id="h-wa" style="margin:0">Bayar lewat WhatsApp</h2>
+    <p class="who" style="font-size:15px;color:var(--fg)">Pesananmu dikirim ke WhatsApp penjual. Cara dan nomor tujuan pembayaran disepakati langsung lewat chat.</p>
+  </section>
+
+  <div class="stack" id="actions" style="gap:10px">
+    <label class="chk" id="paidRow" for="paid" hidden><input id="paid" type="checkbox"> Saya sudah membayar sesuai total</label>
+    <a class="wa" id="wa" href="#" target="_blank" rel="noopener" aria-disabled="true">Kirim ke WhatsApp</a>
+    <p class="note" id="waNote">Pilih metode pembayaran dulu.</p>
+  </div>
+</div>
+
+<script src="pengaturan.js"></script>
+<script src="foto.js"></script>
+<script>
+  var rp = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
+  var fmt = function (n) { return rp.format(n).replace(/\s/g, ""); };
+  var $ = function (id) { return document.getElementById(id); };
+  var byId = {}; PRODUCTS.forEach(function (p) { byId[p.id] = p; });
+  document.title = STORE + " - Pembayaran"; $("namaToko").textContent = STORE;
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  var raw = new URLSearchParams(location.search).get("o") || "";
+  var d = { n: "", c: "", l: [] };
+  try { var parsed = JSON.parse(raw); if (parsed && typeof parsed === "object") d = parsed; } catch (err) {}
+  if (raw) $("back").href = "index.html?o=" + encodeURIComponent(raw);
+
+  var items = [], total = 0;
+  (d.l || []).forEach(function (x) {
+    var a = String(x[0]).split("|"), p = byId[a[0]], q = Math.floor(Number(x[1]));
+    if (p && q > 0) { items.push({ p: p, size: a[1] && a[1] !== "-" ? a[1] : "", q: q }); total += p.price * q; }
+  });
+
+  $("lines").innerHTML = items.map(function (e) {
+    return '<li><span class="l-name">' + e.q + ' × ' + esc(e.p.name) + (e.size ? ' · ukuran ' + esc(e.size) : '') + '</span><span class="l-price">' + fmt(e.p.price * e.q) + '</span></li>';
+  }).join("");
+  $("empty").hidden = items.length > 0;
+  $("total").textContent = fmt(total);
+  var who = [];
+  if (d.n) who.push("Atas nama: " + d.n);
+  if (d.c) who.push("Alamat/catatan: " + d.c);
+  $("who").textContent = who.join(" | ");
+  $("who").hidden = !who.length;
+  var METHODS = [
+    { id: "qris", name: "QRIS" },
+    { id: "wa", name: "Bayar lewat WhatsApp" }
+  ];
+  var pay = null;
+  if (!items.length) { $("pay").hidden = true; $("actions").hidden = true; }
+
+  var qrisSrc = (typeof FOTO !== "undefined" && FOTO[QRIS_IMAGE]) || QRIS_IMAGE;
+  var img = $("qrisImg");
+  function qrisMissing() { img.parentNode.hidden = true; $("qrisMiss").hidden = false; }
+  if (!qrisSrc) { qrisMissing(); } else { img.onerror = qrisMissing; img.src = qrisSrc; }
+  $("amt").textContent = fmt(total);
+
+  function message() {
+    var lines = items.map(function (e) {
+      return "- " + e.q + "x " + e.p.name + (e.size ? " ukuran " + e.size : "") + " (" + fmt(e.p.price * e.q) + ")";
+    });
+    var t = "Halo " + STORE + ", " + (pay === "qris" ? "saya sudah bayar lewat QRIS untuk pesanan:" : "saya mau pesan:") + "\n" + lines.join("\n") + "\n\nTotal: " + fmt(total);
+    if (d.n) t += "\nNama: " + d.n;
+    if (d.c) t += "\nCatatan: " + d.c;
+    if (pay === "qris") t += "\n\nBukti pembayaran saya lampirkan di chat ini.";
+    else t += "\n\nPembayaran: lewat WhatsApp. Mohon info cara pembayarannya.";
+    return t;
+  }
+  function renderWa() {
+    var ok = items.length > 0 && pay !== null && (pay === "wa" || $("paid").checked);
+    var a = $("wa");
+    a.setAttribute("aria-disabled", ok ? "false" : "true");
+    a.href = ok ? "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(message()) : "#";
+    a.textContent = pay === "qris" ? "Kirim bukti pembayaran ke WhatsApp" : pay === "wa" ? "Kirim pesanan ke WhatsApp" : "Kirim ke WhatsApp";
+    $("waNote").textContent = pay === null ? "Pilih metode pembayaran dulu."
+      : pay === "qris" ? "Centang dulu setelah kamu membayar. Di WhatsApp, lampirkan foto bukti pembayaran lalu tekan kirim."
+      : "Tombol membuka WhatsApp dengan isi pesanan yang sudah tertulis. Pesanan baru terkirim setelah kamu menekan kirim di WhatsApp.";
+  }
+  $("payList").innerHTML = METHODS.map(function (m) {
+    return '<label class="opt"><input type="radio" name="bayar" value="' + m.id + '"><span>' + esc(m.name) + '</span></label>';
+  }).join("");
+  $("payList").addEventListener("change", function (e) {
+    pay = e.target.value;
+    $("qrisBox").hidden = pay !== "qris";
+    $("waBox").hidden = pay !== "wa";
+    $("paidRow").hidden = pay !== "qris";
+    renderWa();
+  });
+  $("paid").addEventListener("change", renderWa);
+  $("wa").addEventListener("click", function (e) { if (this.getAttribute("aria-disabled") === "true") e.preventDefault(); });
+  renderWa();
+</script>
+</body>
+</html>
